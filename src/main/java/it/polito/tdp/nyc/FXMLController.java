@@ -1,8 +1,16 @@
 package it.polito.tdp.nyc;
 
 import java.net.URL;
+import java.util.List;
+import java.util.Map;
 import java.util.ResourceBundle;
+
+import org.jgrapht.graph.DefaultWeightedEdge;
+
+import it.polito.tdp.nyc.model.CoppiaA;
 import it.polito.tdp.nyc.model.Model;
+import it.polito.tdp.nyc.model.SimResult;
+import it.polito.tdp.nyc.model.codiciNta;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -11,6 +19,7 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.control.cell.PropertyValueFactory;
 
 public class FXMLController {
 
@@ -32,7 +41,7 @@ public class FXMLController {
     private Button btnCreaLista; // Value injected by FXMLLoader
 
     @FXML // fx:id="clPeso"
-    private TableColumn<?, ?> clPeso; // Value injected by FXMLLoader
+    private TableColumn<Integer, Integer> clPeso; // Value injected by FXMLLoader
 
     @FXML // fx:id="clV1"
     private TableColumn<?, ?> clV1; // Value injected by FXMLLoader
@@ -41,7 +50,7 @@ public class FXMLController {
     private TableColumn<?, ?> clV2; // Value injected by FXMLLoader
 
     @FXML // fx:id="cmbBorough"
-    private ComboBox<?> cmbBorough; // Value injected by FXMLLoader
+    private ComboBox<String> cmbBorough; // Value injected by FXMLLoader
 
     @FXML // fx:id="tblArchi"
     private TableView<?> tblArchi; // Value injected by FXMLLoader
@@ -57,18 +66,53 @@ public class FXMLController {
 
     @FXML
     void doAnalisiArchi(ActionEvent event) {
-    	
-
+    	List<CoppiaA>res = model.getInfoArchi();
+    	String s = "";
+    	this.txtResult.setText("Archi con peso maggiore della media ("+model.analisiCalcoloMedia()+")\n");
+    	for(CoppiaA x : res) {
+    		s += x.toString();
+    	}
+    	this.txtResult.appendText(s);
     }
 
     @FXML
     void doCreaGrafo(ActionEvent event) {
+    	String inputBorgo = this.cmbBorough.getValue();
     	
+    	if(inputBorgo == null) {
+    		this.txtResult.setText("Inserire un numero nel testo (n)!!!");
+    		return;
+    	}
+    		String r = model.creaGrafo(inputBorgo);
+    		this.txtResult.setText(r);
+  
     }
 
     @FXML
     void doSimula(ActionEvent event) {
-
+    	String durata = this.txtDurata.getText();
+    	String probabilita = this.txtProb.getText();
+    	Integer durataNUM;
+    	Double probabilitaNUM;
+    	try {
+    		probabilitaNUM = Double.parseDouble(probabilita);
+    	}catch(NumberFormatException e) {
+    		this.txtResult.setText("Inserire un numero come probabilita!!!");
+    		return;
+    	}
+    	try {
+    		durataNUM = Integer.parseInt(durata);
+    	}catch(NumberFormatException e) {
+    		this.txtResult.setText("Inserire un numero come probabilita!!!");
+    		return;
+    	}
+    	SimResult sim  = model.simula(probabilitaNUM, durataNUM);
+    	String s = "";
+    	for(int i = 0; i<sim.getListaCodiciNTA().size(); i++) {
+    		s+= "\n"+sim.getListaCodiciNTA().get(i).getCodiceNta()+" ha ricondiviso "+sim.getListaShare().get(i)+" files.";
+    		
+    	}
+    	this.txtResult.setText(s);
     }
 
     @FXML // This method is called by the FXMLLoader when initialization is complete
@@ -90,6 +134,8 @@ public class FXMLController {
     
     public void setModel(Model model) {
     	this.model = model;
+    	for(String x : model.getAllBorghi())
+    	     this.cmbBorough.getItems().add(x);
     }
 
 }
